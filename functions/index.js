@@ -1,38 +1,30 @@
-
+// moment.js
+const moment = require('moment-timezone');
 // The Cloud Functions for Firebase SDK to create Cloud Functions and set up triggers.
 const functions = require('firebase-functions');
 
 // The Firebase Admin SDK to access Firestore.
 const admin = require('firebase-admin');
+// moment.tz.setDefault("Asia/kolkata");
+moment.tz.add("Asia/Calcutta|HMT BURT IST IST|-5R.k -6u -5u -6u|01232|-18LFR.k 1unn.k HB0 7zX0");
+moment.tz.link("Asia/Calcutta|Asia/Kolkata");
+
 admin.initializeApp();
 
 exports.date_convesion = functions.https.onRequest(async (request, response) => {
-
-    // const original_date = data.date;
   
-    let philli_time = new Date().toLocaleString("en-US", { timeZone: 'Asia/Manila' });
+    const original_date = request.query.date;
+    let philli_time;
+    if(original_date)
+    {
+      const date1 = moment(original_date).tz('Asia/Kolkata', true);
+      philli_time = moment(date1).tz('Asia/Manila').format("YYYY-MM-DD hh:mm:ss a");
+    }
 
-    let date_nz = new Date(philli_time);
-    let year = date_nz.getFullYear();
-    let month = ("0" + (date_nz.getMonth() + 1)).slice(-2);
-    let date = ("0" + date_nz.getDate()).slice(-2);
-    let hours = ("0" + date_nz.getHours()).slice(-2);
-    let minutes = ("0" + date_nz.getMinutes()).slice(-2);
-    let seconds = ("0" + date_nz.getSeconds()).slice(-2);
+    // Push the new message into Firestore using the Firebase Admin SDK.
+    const writeResult = await admin.firestore().collection('date').add({original_date: philli_time});
 
-    // date as YYYY-MM-DD format
-    let date_yyyy_mm_dd = year + "-" + month + "-" + date;
-
-    // time as hh:mm:ss format
-    let time_hh_mm_ss = hours + ":" + minutes + ":" + seconds;
-
-    // date and time as YYYY-MM-DD hh:mm:ss format
-    let date_time = year + "-" + month + "-" + date + " " + hours + ":" + minutes + ":" + seconds;
-
-    
-    const writeResult = admin.firestore().collection('date').add({original_date: date_time});
-
-    response.json({result: `Date and Time in YYYY-MM-DD hh:mm:ss format: ${writeResult.id} `});
+    response.json({result: `Date and Time in YYYY-MM-DD hh:mm:ss format: ${writeResult.id} ` +philli_time});
 });
 
 
